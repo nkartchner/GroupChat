@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/css/index.css">
+    <script type="text/javascript" src="/js/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="/js/script.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+    <title></title>
+</head>
+
+<body>
+    <main id="grid_container">
+        <h1 id="title">Conversation Board</h1> <h2 id="conected_clients">Connected Clients: <span id="clientCount">0</span></h2>
+        <section id="connected_clients"></section>
+        <section id="message_board">
+            
+            
+            
+        </section>
+        <form id="message_form" autocomplete="off" action="" method="POST">
+            <input type='text' id='message_input' class='form-control' placeholder="enter your message here" autocomplete='off'>
+            <button id="msgSubmit" class='btn btn-success msgSubmit' type="submit" >Submit</button>
+        </form>
+    </main>
+</body>
+
+</html>
