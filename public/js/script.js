@@ -1,61 +1,64 @@
 $(document).ready(function () {
     let loggedIn = false;
     console.log('ready');
-    
-    console.log(loggedIn);
-    const socket = io();
-    
     let clientName = prompt('Welcome! Please enter your name');
+    while(clientName === "" || clientName === null){
+        clientName = prompt('You must enter a name');
+    }
     
+    const socket = io();
+
+    socket.username = clientName;
+
+    let $messageInput = $('#message_input'),
+        $btn = $('#msgSubmit'),
+        $board = $('#message_board'),
+        $clientCount = $('#clientCount'),
+        $connected = $("#connected_users");
 
 
-    let $messageInput = $('#message_input');
-    let $message_content = $('#message_content');
-    let $username = $('#username');
-    let $btn = $('#msgSubmit');
-    let $board = $('#message_board');
-    let $form = $('#message_form');
-    let $clientCount = $('#clientCount');
-
-    socket.emit('newClient', {name:clientName, loggedIn:loggedIn});
-
-    socket.on('loggedin', function(isLoggedIn){
-        loggedIn = isLoggedIn;
-    });
-   
-    socket.on('welcome', (clientCount) => {
-        let welcomeMsg = `Welcome to the group chat ${socket.username}!`;
-        $board.append(`<section id="new_user">${socket.username} Joined the chat room!</section>`);
-    });
-   
-    $btn.click(function(e){
+    $btn.click(function (e) {
         e.preventDefault();
         console.log('clicked');
-        
-        socket.emit('new_message', {msg:$messageInput.val(), user:socket.username});
+        socket.emit('new_message', { msg: $messageInput.val(), user: socket.username });
         $messageInput.val("");
         return false;
     });
 
-    socket.on('processed_message', function(msgData){
-        let msg = `
-        <section id="message_content">${msgData.msg}</section>
-        <section id="users_name">${msgData.username}</section>
-        `;
-        $board.append(msg);
-        console.log(msgData);
-        
-        // $board.append().html(msg);
+    socket.on('connect', function () {
+        console.log(`connection Successfull`);
+        console.log(socket.id);
+        socket.emit('newClient', clientName);
     });
 
-    socket.on('newClient to all', function(data){
-        $board.append(data.username);
+
+    socket.on('invalid_string', function (data) {
+        console.log(data.msg);
+        if (data.username) {
+            console.log(data.msg);
+        }
+    });
+
+    socket.on('processed_message', function (msgData) {
+        let msg = `
+        <section id="users_name">${msgData.user}:</section>
+        <section id="message_content">${msgData.msg}</section>`;
+
+        $board.append(msg);
+    });
+
+    socket.on('update_all', function (data) {
+        $connected.empty();
+        let i =0;
+        for (const userid in data.connectedClients) {
+            console.log(`in the loop going ${++i} time(s)`);   
+            console.log(userid);
+            console.log(data.connectedClients[userid]);
+            $("#connected_users").append(`<h3 id="${userid}"> ${data.connectedClients[userid]} </h3>`);
+        }
+
         $clientCount.text(data.clientCount);
     });
 
-    socket.on('user disconnected', function(clientCount){
-        console.log(clientCount);
-        $clientCount.text(clientCount);
-    });
 
 });

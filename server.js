@@ -1,22 +1,12 @@
 let clientCount = 0;
-let clients = {};
-let messages = {};
-let master = {
-    clients: {},
-    messages: {},
-    clientCount: 0
-};
 
-
+let connectedClients = {};
 
 const express = require('express');
 
 const app = express();
 
-const bodyParser = require('body-parser');
-
 const server = require('http').Server(app);
-server.listen(1337);
 
 const io = require('socket.io')(server);
 
@@ -27,9 +17,11 @@ const session = require('express-session')({
     cookie: { maxAge: 60000 }
 });
 
-const sharedsession = require("express-socket.io-session");
+const bodyParser = require('body-parser');
 
 const path = require("path");
+
+app.use(session);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -39,38 +31,45 @@ app.set('views', path.join(__dirname, './views'));
 
 app.set('view engine', 'ejs');
 
-
 io.on('connection', function (socket) {
-    let loggedIn = false;
-    
-    socket.on('newClient', function (newClientObj) {
-        if(newClientObj.loggedIn) return;
-        if(socket.username == newClientObj.name) return;
-        socket.username = newClientObj.name;
+
+    console.log(socket.id);
+    socket.on('newClient', function (newClient) {
+        socket.username = newClient;
         ++clientCount;
-        loggedIn = true;
-        socket.emit('loggedin', loggedIn)
-        io.emit('newClient to all', {username:socket.username, clientCount:clientCount});
+        connectedClients[socket.id] = socket.username;
+        console.log(`Made user. heres the updated connected clients`);
+        
+        console.log(connectedClients);
+        io.emit('update_all', {clientCount:clientCount, connectedClients:connectedClients});
     });
 
-    socket.on('new_message', function(data){
+
+    socket.on('new_message', function (data) {
         console.log(data);
+        if(data.msg === ''){
+            socket.emit('invalid_string', {msg:'Not a valid string. Please try again'});
+            return;
+        }
         io.emit('processed_message', data);
     });
-    
-    socket.on('dissconnect', function(){
-        clientCount--;
-        io.emit('user disconnected', clientCount);
+
+
+    socket.on('disconnect', function (userData) {
+        --clientCount;
+        delete connectedClients[socket.id];
+        console.log(`user dissconnected. here is the updated conneced clients`);
+        console.log(connectedClients);
+        io.emit('update_all', {clientCount:clientCount, connectedClients:connectedClients});
     });
 
 });
 
 
 app.get('/', function (request, response) {
+    request.session.loggedIn = true;
     response.render('index');
 });
 
+server.listen(1337);
 
-app.listen(8000, function () {
-    console.log(`Listening on port 8000`);
-});
